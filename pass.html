@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Password Strength Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 24px 22px 22px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(148, 163, 184, 0.1);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      font-size: 1.4rem;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    .input-row {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    /* base style for both password and text mode */
+    input.password-field {
+      width: 100%;
+      padding: 10px 36px 10px 10px;
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+
+    input.password-field:focus {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 1px #6366f1;
+    }
+
+    /* visible mode style */
+    input.password-field.visible-mode {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 1px #f97316;
+      background: #111827;
+      transform: translateY(-1px);
+    }
+
+    .toggle-visibility {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: none;
+      color: #9ca3af;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .strength-bar-wrapper {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1f2933;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s ease;
+      border-radius: inherit;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .status-label {
+      font-size: 0.9rem;
+    }
+
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Colors for states */
+    .weak {
+      background: #7f1d1d;
+      border-color: #fecaca;
+      color: #fecaca;
+    }
+    .medium {
+      background: #78350f;
+      border-color: #fed7aa;
+      color: #fed7aa;
+    }
+    .strong {
+      background: #064e3b;
+      border-color: #bbf7d0;
+      color: #bbf7d0;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+
+    .checks {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.78rem;
+    }
+
+    .checks li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+      color: #9ca3af;
+    }
+
+    .checks li span.icon {
+      font-size: 0.8rem;
+      width: 14px;
+      text-align: center;
+    }
+
+    .checks li.ok {
+      color: #a7f3d0;
+    }
+
+    .checks li.ok span.icon {
+      color: #22c55e;
+    }
+
+    .checks li.bad span.icon {
+      color: #f97316;
+    }
+
+    .disclaimer {
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    /* LeBron box */
+    .lebron-box {
+      display: none; /* hidden by default */
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(22, 163, 74, 0.07);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      animation: popIn 0.25s ease-out;
+    }
+
+    .lebron-text {
+      font-size: 0.85rem;
+      color: #bbf7d0;
+      font-weight: 500;
+    }
+
+    .lebron-text small {
+      display: block;
+      font-size: 0.7rem;
+      color: #86efac;
+    }
+
+    .lebron-img {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 2px solid #22c55e;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Password Strength Checker</h1>
+    <p class="subtitle">Type a password and we tell you if it is good or not – everything happens only in your browser.</p>
+
+    <label for="password">Your password</label>
+    <div class="input-row">
+      <input id="password" class="password-field" type="password" autocomplete="off" />
+      <button class="toggle-visibility" type="button" id="toggleVisibility">Show</button>
+    </div>
+
+    <div class="strength-bar-wrapper">
+      <div id="strengthBar" class="strength-bar"></div>
+    </div>
+
+    <div class="status-row">
+      <div class="status-label" id="statusText">Start typing a password...</div>
+      <div class="status-badge" id="statusBadge"></div>
+    </div>
+
+    <p class="hint" id="hintText"></p>
+
+    <ul class="checks">
+      <li id="checkLength" class="bad">
+        <span class="icon">•</span>
+        At least 12 characters
+      </li>
+      <li id="checkTypes" class="bad">
+        <span class="icon">•</span>
+        Lowercase, uppercase, number, special character
+      </li>
+      <li id="checkReuse" class="bad">
+        <span class="icon">•</span>
+        Not a very common / simple pattern
+      </li>
+    </ul>
+
+    <!-- LeBron box (only shows when strong password) -->
+    <div id="lebronBox" class="lebron-box">
+      <img
+        src="https://a.espncdn.com/photo/2013/0620/nba_g_spurs-heat8_mb_576.jpg"
+        alt="LeBron James"
+        class="lebron-img"
+      />
+      <div class="lebron-text">
+        LeBron James approves this password. 🏀
+        <small>Strong defense – on the court and for your accounts.</small>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      Tip: Use a password manager and enable 2-factor authentication for important accounts.
+    </p>
+  </div>
+
+  <script>
+    const passwordInput = document.getElementById("password");
+    const strengthBar = document.getElementById("strengthBar");
+    const statusText = document.getElementById("statusText");
+    const statusBadge = document.getElementById("statusBadge");
+    const hintText = document.getElementById("hintText");
+
+    const checkLength = document.getElementById("checkLength");
+    const checkTypes = document.getElementById("checkTypes");
+    const checkReuse = document.getElementById("checkReuse");
+
+    const toggleVisibilityBtn = document.getElementById("toggleVisibility");
+    const lebronBox = document.getElementById("lebronBox");
+
+    toggleVisibilityBtn.addEventListener("click", () => {
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleVisibilityBtn.textContent = "Hide";
+        passwordInput.classList.add("visible-mode");
+      } else {
+        passwordInput.type = "password";
+        toggleVisibilityBtn.textContent = "Show";
+        passwordInput.classList.remove("visible-mode");
+      }
+    });
+
+    passwordInput.addEventListener("input", () => {
+      const pwd = passwordInput.value;
+      evaluatePassword(pwd);
+    });
+
+    function setCheckState(element, ok) {
+      element.classList.remove("ok", "bad");
+      element.classList.add(ok ? "ok" : "bad");
+      const icon = element.querySelector(".icon");
+      icon.textContent = ok ? "✓" : "•";
+    }
+
+    function evaluatePassword(password) {
+      if (!password) {
+        strengthBar.style.width = "0%";
+        strengthBar.style.background = "transparent";
+        statusText.textContent = "Start typing a password...";
+        statusBadge.textContent = "";
+        statusBadge.className = "status-badge";
+        hintText.textContent = "";
+        setCheckState(checkLength, false);
+        setCheckState(checkTypes, false);
+        setCheckState(checkReuse, false);
+        lebronBox.style.display = "none";
+        return;
+      }
+
+      let score = 0;
+
+      const lengthOk = password.length >= 12;
+      const hasLower = /[a-z]/.test(password);
+      const hasUpper = /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+      const varietyCount = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+
+      const commonPatterns = [
+        "12345",
+        "password",
+        "passwort",
+        "qwerty",
+        "iloveyou",
+        "admin",
+        "welcome"
+      ];
+      const looksCommon = commonPatterns.some(p => password.toLowerCase().includes(p));
+
+      // Basic scoring
+      if (lengthOk) score += 2;
+      else if (password.length >= 8) score += 1;
+
+      if (varietyCount === 2) score += 1;
+      if (varietyCount >= 3) score += 2;
+
+      if (!looksCommon) score += 1;
+
+      // Update checklist
+      setCheckState(checkLength, lengthOk);
+      setCheckState(checkTypes, varietyCount >= 3);
+      setCheckState(checkReuse, !looksCommon);
+
+      // Calculate visual strength (0-100)
+      const maxScore = 5;
+      const percent = Math.min((score / maxScore) * 100, 100);
+      strengthBar.style.width = percent + "%";
+
+      let quality = "";
+      let hint = "";
+      let cssClass = "";
+      let barColor = "";
+
+      if (score <= 2) {
+        quality = "Not good (weak)";
+        cssClass = "weak";
+        barColor = "linear-gradient(90deg, #b91c1c, #f97373)";
+        hint = "Use a longer password and mix uppercase, lowercase, numbers and special characters.";
+        lebronBox.style.display = "none";
+      } else if (score === 3 || score === 4) {
+        quality = "Okay, but can be better";
+        cssClass = "medium";
+        barColor = "linear-gradient(90deg, #d97706, #facc15)";
+        hint = "Make it longer and avoid simple words or patterns.";
+        lebronBox.style.display = "none";
+      } else {
+        quality = "Good (strong)";
+        cssClass = "strong";
+        barColor = "linear-gradient(90deg, #16a34a, #22c55e)";
+        hint = "This looks strong. Do not reuse it on other websites.";
+        lebronBox.style.display = "flex"; // show LeBron
+      }
+
+      statusText.textContent = "Password quality:";
+      statusBadge.textContent = quality;
+      statusBadge.className = "status-badge " + cssClass;
+      strengthBar.style.background = barColor;
+      hintText.textContent = hint;
+    }
+  </script>
+</body>
+</html>
